@@ -1,0 +1,31 @@
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+bin/
+obj/
+.vs/
+.vscode/
+DataProvider/bin/
+DataProvider/obj/
+Entities/bin/
+Entities/obj/
+Infrastructure/bin/
+Infrastructure/obj/
+WebAPI/bin/
+WebAPI/obj/
+
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Auto-generated files
+*.designer.cs
+*.g.cs
+*.g.i.cs
+*.assemblyattributes.cs
