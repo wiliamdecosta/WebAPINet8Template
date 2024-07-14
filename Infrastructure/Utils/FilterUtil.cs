@@ -39,7 +39,7 @@ namespace Infrastructure.Util
 			// Filter data based on request
 			foreach (var filter in _request.Filters)
 			{
-				var filterExpression = GetFilterExpression<T>(filter.Key, filter.Operator, filter.Value);
+				var filterExpression = GetFilterExpression<T>(filter.Key, filter.Operator, filter.Values);
 				if (filterExpression != null)
 					query = query.Where(filterExpression);
 			}
@@ -101,11 +101,11 @@ namespace Infrastructure.Util
 			return body != null ? Expression.Lambda<Func<T, bool>>(body, parameter) : null;
 		}
 
-		private Expression<Func<T, bool>>? GetFilterExpression<T>(string key, string @operator, string value)
+		private Expression<Func<T, bool>>? GetFilterExpression<T>(string key, string @operator, List<string> values)
 		{
 			var parameter = Expression.Parameter(typeof(T), "x");
 			var property = Expression.Property(parameter, key);
-			var constant = Expression.Constant(Convert.ChangeType(value, property.Type));
+			var constant = Expression.Constant(Convert.ChangeType(values[0], property.Type));
 
 			Expression? body = null;
 
@@ -132,6 +132,21 @@ namespace Infrastructure.Util
 				case "ILIKE":
 					// Assuming property type is string
 					body = Expression.Call(property, "Contains", null, constant);
+					break;
+				case "BETWEEN":
+					if (values.Count < 2) { Expression.Equal(property, constant); break; }
+					var lowerBound = Expression.Constant(Convert.ChangeType(values[0], property.Type));
+					var upperBound = Expression.Constant(Convert.ChangeType(values[1], property.Type));
+					body = Expression.AndAlso(
+						Expression.GreaterThanOrEqual(property, lowerBound),
+						Expression.LessThanOrEqual(property, upperBound)
+					);
+					break;
+				case "IN":
+					if (values.Count < 2) { Expression.Equal(property, constant); break; }
+					var inValues = values.Select(v => Expression.Constant(Convert.ChangeType(v, property.Type))).ToArray();
+					var arrayExpression = Expression.NewArrayInit(property.Type, inValues);
+					body = Expression.Call(typeof(Enumerable), "Contains", new[] { property.Type }, arrayExpression, property);
 					break;
 				default:
 					break;
